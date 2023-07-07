@@ -75,6 +75,29 @@
         var cylinder = new THREE.Mesh( cylinderGeometry, cylinderMaterial );
         cylinder.position.set( 0, -100, 0 );
         scene.add( cylinder );
+
+        //　炎の作成
+
+        // set path to texture images
+        // either relative or absolute path
+        VolumetricFire.texturePath = './textures/';
+        var fireWidth  = 100;
+        var fireHeight = 400;
+        var fireDepth  = 100;
+        var sliceSpacing = 10;
+
+        var fire = new VolumetricFire(
+          fireWidth,
+          fireHeight,
+          fireDepth,
+          sliceSpacing,
+          camera
+        );
+        scene.add( fire.mesh );
+
+        // you can set position, rotation and scale
+        // fire.mesh accepts THREE.mesh features
+        fire.mesh.position.set( 0, fireHeight / 2, 0 );
         
         //6面分のテクスチャー読み込み
         var materials = [
@@ -122,6 +145,11 @@
           // レンダリング
           renderer.render(scene, camera);
           requestAnimationFrame(tick);
+
+          var elapsed = clock.getElapsedTime();
+          fire.update( elapsed );
+
+         all.rotation.y += 0.01;
         }
       }
     </script>
