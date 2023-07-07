@@ -2,7 +2,11 @@
   <head>
     <meta charset="utf-8" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
-    <script src="OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+    
+    
+
     <script>
       // ページの読み込みを待つ
       window.addEventListener('load', init);
@@ -16,13 +20,18 @@
         const renderer = new THREE.WebGLRenderer({
           canvas: document.querySelector('#myCanvas')
         });
+        document.body.appendChild(renderer.domElement);
         renderer.setSize(width, height);
+        // 光源が関係ないので
+        renderer.setClearColor(0xf9f9f9, 1.0);
 
         // シーンを作成
         const scene = new THREE.Scene();
+        // シーンに追加
+        scene.add(directionalLight2);
 
-        // フォグを設定
-        scene.fog = new THREE.Fog(0x000000, 50, 2000);
+        // シーン全体のフォグ
+        scene.fog = new THREE.Fog(0xf9f9f9, 800, 2000);
 
         // カメラを作成
         const camera = new THREE.PerspectiveCamera(45, width / height);
@@ -39,43 +48,78 @@
         const axisHelper = new THREE.AxisHelper(1000); //軸の長さ　X：赤、Y：緑、z：青
         scene.add(axisHelper);
 
-        // グループを作成
-        const group = new THREE.Group();
-        scene.add(group);
-        const geometry = new THREE.BoxGeometry(50, 50, 50);
-        //const geometry = new THREE.BoxBufferGeometry(50, 50, 50);
-        const material = new THREE.MeshStandardMaterial();
+        // マテリアルを作成する
+        const material1 = new THREE.SpriteMaterial({
+          map: new THREE.TextureLoader().load('img/star.png')
+        });
+        // フォグ（霞）を有効にする
+        material1.fog = true;
 
-        for (let i = 0; i < 1000; i++) {
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.position.x = (Math.random() - 0.5) * 2000;
-          mesh.position.y = (Math.random() - 0.5) * 2000;
-          mesh.position.z = (Math.random() - 0.5) * 2000;
-          mesh.rotation.x = Math.random() * 2 * Math.PI;
-          mesh.rotation.y = Math.random() * 2 * Math.PI;
-          mesh.rotation.z = Math.random() * 2 * Math.PI;
-          // グループに格納する
-          group.add(mesh);
+        // ビルボードを作成
+        for (let i = 0; i < 100; i++) {
+          const sprite = new THREE.Sprite(material1);
+          // ランダムな座標に配置
+          sprite.position.x = 1000 * (Math.random() - 0.5);
+          sprite.position.y = 300 * Math.random() - 150;
+          sprite.position.z = 1000 * (Math.random() - 0.5);
+          // 必要に応じてスケールを調整
+          sprite.scale.set(50, 50, 50);
+
+          scene.add(sprite);
         }
 
-     
-      　 // 光源（環境光）
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-        scene.add(ambientLight);
-
-        // 平行光源
-        var directionalLight1 = new THREE.DirectionalLight(0xffffff,0.5);
-        directionalLight1.position.set(1000, 1000, 700);
-        // シーンに追加
-        scene.add(directionalLight1);
+         // トーチの作成
+        var cylinderGeometry = new THREE.CylinderGeometry( 50, 30, 200, 8 );
+        //上の底面の半径、下の底面の半径、高さ、何角柱か
+        var cylinderMaterial = new THREE.MeshPhongMaterial( {color: 0xefa92a} );
+        var cylinder = new THREE.Mesh( cylinderGeometry, cylinderMaterial );
+        cylinder.position.set( 0, -100, 0 );
+        scene.add( cylinder );
         
+        //6面分のテクスチャー読み込み
+        var materials = [
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsl.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsr.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img3.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img4.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bf.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bb.png")}),
+        ];
+        
+        var material = new THREE.MeshFaceMaterial(materials); // マテリアルをセット
+
+        // 平面を作成
+        var planeGeometry = new THREE.PlaneGeometry(5,5,5,5);
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0x734e30});
+        var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+        plane.rotation.set( -Math.PI/2, 0, 0 );
+        plane.position.set(0,0,0);
+
+
+        // 箱を作成
+        var geometry = new THREE.BoxGeometry(1, 2, 0.5);
+        var box = new THREE.Mesh(geometry, material);
+        box.position.set(0,1,0);
+
+        // 全体のオブジェクト
+        const all = new THREE.Group();
+        all.add(plane);
+        all.add(box);
+        all.position.set(0, 0, 0);
+        scene.add(all);
+
+
+        // 光源（環境光）
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+      scene.add(ambientLight);
+
+
 
         tick();
 
         // 毎フレーム時に実行されるループイベントです
         function tick() {
           // レンダリング
-          group.rotateY(0.01);
           renderer.render(scene, camera);
           requestAnimationFrame(tick);
         }
